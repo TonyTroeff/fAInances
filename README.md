@@ -20,3 +20,11 @@ Prerequisites: .NET 10 SDK and Docker.
 2. Open http://localhost:5227.
 
 On first start the app creates its indexes and seeds a few default categories.
+
+## Running tests
+
+```bash
+dotnet test
+```
+
+The service tests run against a throwaway MongoDB server started by [EphemeralMongo](https://github.com/asimmon/ephemeral-mongo), so Docker is not needed for them. The `mongod` binaries are downloaded from downloads.mongodb.org on the first run and cached locally.
