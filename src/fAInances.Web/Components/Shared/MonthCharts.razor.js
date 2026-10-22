@@ -126,8 +126,60 @@ function trendDatasets(data, colors) {
             pointHoverBorderColor: colors.surface,
             tension: 0,
             order: 1,
+            yAxisID: 'balance',
         },
     ];
+}
+
+// The bars and the balance get their own y axes, but both put zero at the same height so the bars' baseline is
+// also the balance's zero line. The share of the height below zero is what the balance needs, capped at half so the
+// bars always keep room.
+function alignedRanges(data) {
+    const extent = values => ({ below: Math.max(0, -Math.min(...values)), above: Math.max(0, ...values) });
+    const bars = extent(data.days.flatMap(d => [d.income, d.expenses]));
+    const balance = extent(data.days.map(d => d.balance));
+    const belowShare = Math.min(0.5, balance.below / (balance.below + balance.above || 1));
+
+    const range = ({ below, above }) => {
+        const needed = Math.max(belowShare > 0 ? below / belowShare : 0, above / (1 - belowShare));
+        const span = (needed || 1) * 1.1;
+        return { min: -span * belowShare, max: span * (1 - belowShare) };
+    };
+
+    return { bars: range(bars), balance: range(balance) };
+}
+
+function trendScales(data, colors) {
+    const ranges = alignedRanges(data);
+    const valueAxis = (title, range, allowNegative) => ({
+        ...range,
+        border: { display: false },
+        title: { display: true, text: title, color: colors.text, font: { size: 11 } },
+        // The ranges are not round numbers, so leave the ends unlabelled and tick only at round steps (zero included).
+        // Bars are never negative, so their axis leaves the part below zero (room for the balance) unlabelled.
+        ticks: {
+            color: colors.text,
+            maxTicksLimit: 6,
+            includeBounds: false,
+            callback: value => (value < 0 && !allowNegative ? null : compactFormat.format(value)),
+        },
+    });
+
+    return {
+        x: {
+            grid: { display: false },
+            border: { color: colors.grid },
+            ticks: {
+                color: colors.text,
+                maxRotation: 0,
+                autoSkipPadding: 12,
+                // Day numbers keep the axis short; the tooltip shows the full date.
+                callback: (_, index) => String(index + 1),
+            },
+        },
+        y: { ...valueAxis('Income / expenses', ranges.bars, false), position: 'left', grid: { color: colors.grid } },
+        balance: { ...valueAxis('Balance', ranges.balance, true), position: 'right', grid: { drawOnChartArea: false } },
+    };
 }
 
 function tooltipStyle(colors) {
@@ -194,24 +246,7 @@ function createTrend(canvas, data, colors) {
             maintainAspectRatio: false,
             animation: { duration: 300 },
             interaction: { mode: 'index', intersect: false },
-            scales: {
-                x: {
-                    grid: { display: false },
-                    border: { color: colors.grid },
-                    ticks: {
-                        color: colors.text,
-                        maxRotation: 0,
-                        autoSkipPadding: 12,
-                        // Day numbers keep the axis short; the tooltip shows the full date.
-                        callback: (_, index) => String(index + 1),
-                    },
-                },
-                y: {
-                    grid: { color: colors.grid },
-                    border: { display: false },
-                    ticks: { color: colors.text, maxTicksLimit: 6, callback: value => compactFormat.format(value) },
-                },
-            },
+            scales: trendScales(data, colors),
             plugins: {
                 legend: { display: false },
                 tooltip: {
@@ -228,16 +263,7 @@ function createTrend(canvas, data, colors) {
 }
 
 function applyTheme(chart, colors) {
-    const tooltip = chart.options.plugins.tooltip;
-    Object.assign(tooltip, tooltipStyle(colors));
-
-    const { x, y } = chart.options.scales ?? {};
-    if (x && y) {
-        x.border.color = colors.grid;
-        x.ticks.color = colors.text;
-        y.grid.color = colors.grid;
-        y.ticks.color = colors.text;
-    }
+    Object.assign(chart.options.plugins.tooltip, tooltipStyle(colors));
 }
 
 export async function create(donutCanvas, trendCanvas, chartJsUrl, data) {
@@ -252,6 +278,7 @@ export async function create(donutCanvas, trendCanvas, chartJsUrl, data) {
         donut.data.datasets = donutDatasets(current, colors);
         trend.data.labels = current.days.map(d => d.label);
         trend.data.datasets = trendDatasets(current, colors);
+        trend.options.scales = trendScales(current, colors);
         applyTheme(donut, colors);
         applyTheme(trend, colors);
         donut.update();
