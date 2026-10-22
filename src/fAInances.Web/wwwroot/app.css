@@ -178,7 +178,8 @@ h1:focus {
 }
 
 /* ---------- Transactions list ---------- */
-.month-switcher {
+.month-switcher,
+.export-menu {
     display: inline-flex;
     align-items: center;
     background-color: var(--app-surface);
