@@ -5,7 +5,7 @@
 @if (isCreating)
 {
     @* data-no-implicit-submit (handled in app.js) stops Enter here from submitting the surrounding form. *@
-    <div class="new-category border rounded p-3 bg-body-tertiary" data-no-implicit-submit>
+    <div class="new-category border rounded-3 p-3 bg-body-tertiary" data-no-implicit-submit>
         <div class="mb-2">
             <label class="form-label small mb-1" for="new-category-name">New category name</label>
             <input id="new-category-name" class="form-control form-control-sm" maxlength="@Category.NameMaxLength"
@@ -41,7 +41,7 @@ else
                 <option value="@category.Id">@category.Name</option>
             }
         </select>
-        <button type="button" class="btn btn-outline-secondary" @onclick="StartCreate">+ New</button>
+        <button type="button" class="btn btn-outline-secondary" @onclick="StartCreate"><i class="bi bi-plus-lg"></i> New</button>
     </div>
     @if (SelectedCategory?.Description is { } description)
     {

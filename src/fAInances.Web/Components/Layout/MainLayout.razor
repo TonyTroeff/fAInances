@@ -1,20 +1,10 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<AppHeader />
 
-    <main>
-        <div class="top-row px-4">
-            <span class="text-muted small">Track income and expenses, one month at a time.</span>
-        </div>
-
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+<main class="container-xl app-content">
+    @Body
+</main>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
