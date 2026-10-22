@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/fAInances.Services/fAInances.Services.csproj" />
+    <Project Path="src/fAInances.Web/fAInances.Web.csproj" />
+  </Folder>
+</Solution>

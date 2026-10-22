@@ -1,0 +1,143 @@
+@page "/"
+@page "/transactions"
+@inject ITransactionService TransactionService
+@inject NavigationManager Navigation
+
+<PageTitle>Transactions · fAInances</PageTitle>
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+    <h1 class="h3 mb-0">Transactions</h1>
+    <a class="btn btn-primary" href="transactions/new">+ Add transaction</a>
+</div>
+
+<div class="d-flex align-items-center gap-2 mb-3">
+    <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Previous month" @onclick="() => GoToMonth(-1)">‹</button>
+    <span class="fw-semibold month-label text-center">@selectedMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture)</span>
+    <button type="button" class="btn btn-sm btn-outline-secondary" aria-label="Next month" @onclick="() => GoToMonth(1)">›</button>
+</div>
+
+@if (errorMessage is not null)
+{
+    <div class="alert alert-danger" role="alert">@errorMessage</div>
+}
+
+@if (items is null)
+{
+    <p class="text-muted">Loading…</p>
+}
+else if (items.Count == 0)
+{
+    <div class="text-center text-muted border rounded py-5">
+        <p class="mb-2">No transactions in @selectedMonth.ToString("MMMM yyyy", CultureInfo.InvariantCulture).</p>
+        <a href="transactions/new">Add your first one</a>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Category</th>
+                    <th scope="col" class="text-end">Amount</th>
+                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in items)
+                {
+                    var isIncome = item.Type == TransactionType.Income;
+                    <tr @key="item.Id">
+                        <td class="text-nowrap">@item.Date.ToString("dd MMM yyyy", CultureInfo.InvariantCulture)</td>
+                        <td>
+                            @if (item.Description is null)
+                            {
+                                <span class="text-muted">—</span>
+                            }
+                            else
+                            {
+                                @item.Description
+                            }
+                        </td>
+                        <td><span class="badge text-bg-light border fw-normal">@item.CategoryName</span></td>
+                        <td class="text-end text-nowrap fw-semibold @(isIncome ? "text-success" : "text-danger")">
+                            @(isIncome ? "+" : "−")@item.Amount.ToString("N2", CultureInfo.InvariantCulture)
+                        </td>
+                        <td class="text-end text-nowrap">
+                            @if (pendingDeleteId == item.Id)
+                            {
+                                <span class="small me-2">Delete?</span>
+                                <button type="button" class="btn btn-sm btn-danger" @onclick="() => DeleteAsync(item.Id)">Confirm</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary" @onclick="() => pendingDeleteId = null">Cancel</button>
+                            }
+                            else
+                            {
+                                <a class="btn btn-sm btn-outline-secondary" href="transactions/@item.Id/edit">Edit</a>
+                                <button type="button" class="btn btn-sm btn-outline-danger" @onclick="() => pendingDeleteId = item.Id">Delete</button>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "month")]
+    public string? Month { get; set; }
+
+    private DateOnly selectedMonth;
+    private IReadOnlyList<TransactionListItem>? items;
+    private string? pendingDeleteId;
+    private string? errorMessage;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        selectedMonth = ParseMonth(Month);
+        pendingDeleteId = null;
+        errorMessage = null;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        items = await TransactionService.GetForMonthAsync(selectedMonth.Year, selectedMonth.Month);
+    }
+
+    private void GoToMonth(int offset)
+    {
+        var month = selectedMonth.AddMonths(offset).ToString("yyyy-MM", CultureInfo.InvariantCulture);
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("month", month));
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        errorMessage = null;
+        try
+        {
+            await TransactionService.DeleteAsync(id);
+        }
+        catch (NotFoundException)
+        {
+            // Already gone; the reload below brings the list up to date.
+        }
+
+        pendingDeleteId = null;
+        await LoadAsync();
+    }
+
+    private static DateOnly ParseMonth(string? month)
+    {
+        if (month is not null
+            && DateOnly.TryParseExact($"{month}-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+        {
+            return parsed;
+        }
+
+        var today = DateTime.Today;
+        return new DateOnly(today.Year, today.Month, 1);
+    }
+}
