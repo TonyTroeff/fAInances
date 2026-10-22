@@ -1,5 +1,6 @@
 using fAInances.Services.Categories;
 using fAInances.Services.Entities;
+using fAInances.Services.Export;
 using fAInances.Services.Infrastructure;
 using fAInances.Services.Options;
 using fAInances.Services.Transactions;
@@ -33,6 +34,10 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ITransactionService, TransactionService>();
+
+        services.AddKeyedScoped<ITransactionExportService, CsvTransactionExportService>(ExportFormats.Csv);
+        services.AddKeyedScoped<ITransactionExportService, ExcelTransactionExportService>(ExportFormats.Excel);
+        services.AddKeyedScoped<ITransactionExportService, PdfTransactionExportService>(ExportFormats.Pdf);
 
         services.AddHostedService<MongoInitializer>();
 
