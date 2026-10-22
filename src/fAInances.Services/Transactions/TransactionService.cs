@@ -49,6 +49,35 @@ internal sealed class TransactionService(
             .ToList();
     }
 
+    public async Task<MonthlySummary> GetMonthlySummaryAsync(int year, int month, CancellationToken cancellationToken = default)
+    {
+        var items = await GetForMonthAsync(year, month, cancellationToken);
+
+        var incomes = items.Where(i => i.Type == TransactionType.Income).ToList();
+        var expenses = items.Where(i => i.Type == TransactionType.Expense).ToList();
+
+        var first = new DateOnly(year, month, 1);
+        var days = new List<DailyTotal>(DateTime.DaysInMonth(year, month));
+        var runningBalance = 0m;
+        for (var date = first; date < first.AddMonths(1); date = date.AddDays(1))
+        {
+            var income = incomes.Where(i => i.Date == date).Sum(i => i.Amount);
+            var expense = expenses.Where(i => i.Date == date).Sum(i => i.Amount);
+            runningBalance += income - expense;
+            days.Add(new DailyTotal { Date = date, Income = income, Expenses = expense, RunningBalance = runningBalance });
+        }
+
+        return new MonthlySummary
+        {
+            Transactions = items,
+            TotalIncome = incomes.Sum(i => i.Amount),
+            TotalExpenses = expenses.Sum(i => i.Amount),
+            IncomeByCategory = TotalsByCategory(incomes),
+            ExpensesByCategory = TotalsByCategory(expenses),
+            Days = days,
+        };
+    }
+
     public async Task<Transaction?> GetByIdAsync(string id, CancellationToken cancellationToken = default)
     {
         if (!ObjectId.TryParse(id, out _))
@@ -151,6 +180,19 @@ internal sealed class TransactionService(
         transaction.CategoryId = category.Id;
         transaction.Description = description;
     }
+
+    private static List<CategoryTotal> TotalsByCategory(IEnumerable<TransactionListItem> items) =>
+        items
+            .GroupBy(i => i.CategoryId)
+            .Select(g => new CategoryTotal
+            {
+                CategoryId = g.Key,
+                CategoryName = g.First().CategoryName,
+                Amount = g.Sum(i => i.Amount),
+            })
+            .OrderByDescending(c => c.Amount)
+            .ThenBy(c => c.CategoryName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     private static NotFoundException TransactionNotFound() => new("The transaction could not be found.");
 }
