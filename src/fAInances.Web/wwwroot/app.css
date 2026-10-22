@@ -20,6 +20,15 @@
     --bs-link-hover-color: var(--app-primary-hover);
     --bs-link-hover-color-rgb: 29, 78, 216;
     --bs-border-color: var(--app-border);
+    /* Chart colours, checked for colour-blind separation and contrast against the surface. The category shades run
+       from -first (largest category) through the base colour to -last. */
+    --chart-income: #0e9488;
+    --chart-income-first: #0a6b62;
+    --chart-income-last: #3fb5a4;
+    --chart-expense: #dc4a42;
+    --chart-expense-first: #a32d28;
+    --chart-expense-last: #e8806f;
+    --chart-balance: #2563eb;
 }
 
 [data-bs-theme=dark] {
@@ -45,6 +54,13 @@
     --bs-link-hover-color: #93c5fd;
     --bs-link-hover-color-rgb: 147, 197, 253;
     --bs-border-color: var(--app-border);
+    --chart-income: #26a685;
+    --chart-income-first: #6fd1b6;
+    --chart-income-last: #1b7a62;
+    --chart-expense: #e96450;
+    --chart-expense-first: #f39a8b;
+    --chart-expense-last: #b5463a;
+    --chart-balance: #3b82f6;
 }
 
 /* ---------- Base ---------- */
@@ -324,6 +340,90 @@ h1:focus {
     background-color: var(--bs-primary-bg-subtle);
     color: var(--app-primary);
     font-size: 1.5rem;
+}
+
+/* ---------- Charts ---------- */
+.chart-card {
+    height: 100%;
+    padding: 1rem 1.25rem 1.25rem;
+}
+
+.chart-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.chart-title {
+    margin: 0;
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.9rem;
+    color: var(--bs-secondary-color);
+    font-size: 0.8rem;
+}
+
+    .chart-legend > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+.chart-swatch {
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    border-radius: 0.2rem;
+}
+
+    .chart-swatch.is-income {
+        background-color: var(--chart-income);
+    }
+
+    .chart-swatch.is-expense {
+        background-color: var(--chart-expense);
+    }
+
+    .chart-swatch.is-balance {
+        background-color: var(--chart-balance);
+    }
+
+    .chart-swatch-line {
+        width: 0.9rem;
+        height: 2px;
+        border-radius: 1px;
+    }
+
+.chart-canvas {
+    position: relative;
+    height: 280px;
+}
+
+.chart-donut-center {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.chart-donut-value {
+    font-size: 1.15rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Transaction editor ---------- */

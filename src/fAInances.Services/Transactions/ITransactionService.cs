@@ -10,6 +10,11 @@ public interface ITransactionService
     /// </summary>
     Task<IReadOnlyList<TransactionListItem>> GetForMonthAsync(int year, int month, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Returns the month's transactions together with their totals per type, per category and per day.
+    /// </summary>
+    Task<MonthlySummary> GetMonthlySummaryAsync(int year, int month, CancellationToken cancellationToken = default);
+
     Task<Transaction?> GetByIdAsync(string id, CancellationToken cancellationToken = default);
 
     Task<Transaction> CreateAsync(TransactionInput input, CancellationToken cancellationToken = default);

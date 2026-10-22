@@ -77,6 +77,8 @@ else if (items.Count == 0)
 }
 else
 {
+    <MonthCharts Summary="summary" />
+
     <div class="surface-card">
         <div class="table-responsive">
             <table class="table table-hover align-middle transactions-table mb-0">
@@ -152,6 +154,7 @@ else
     public string? Month { get; set; }
 
     private DateOnly selectedMonth;
+    private MonthlySummary? summary;
     private IReadOnlyList<TransactionListItem>? items;
     private string? pendingDeleteId;
     private string? errorMessage;
@@ -172,9 +175,10 @@ else
 
     private async Task LoadAsync()
     {
-        items = await TransactionService.GetForMonthAsync(selectedMonth.Year, selectedMonth.Month);
-        totalIncome = items.Where(i => i.Type == TransactionType.Income).Sum(i => i.Amount);
-        totalExpenses = items.Where(i => i.Type == TransactionType.Expense).Sum(i => i.Amount);
+        summary = await TransactionService.GetMonthlySummaryAsync(selectedMonth.Year, selectedMonth.Month);
+        items = summary.Transactions;
+        totalIncome = summary.TotalIncome;
+        totalExpenses = summary.TotalExpenses;
     }
 
     private void GoToMonth(int offset)
